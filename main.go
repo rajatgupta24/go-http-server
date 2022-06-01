@@ -1,59 +1,64 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-type ToDoItem struct {
-	id     int
-	todo   string
-	isDone bool
+type Todo struct {
+	Id      int    `json:"Id"`
+	Title   string `json:"Title"`
+	IsDone  bool   `json:"IsDone"`
+	Content string `json:"Content"`
 }
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/hello" {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
+type Todos []Todo
 
-	if r.Method != "GET" {
-		http.Error(w, "Method not supported", http.StatusNotFound)
-		return
-	}
-	fmt.Fprint(w, "Hello World")
+var todos Todos
+
+func getAllTodos(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(todos)
 }
 
-func addElement(todos []ToDoItem, todo ToDoItem) ToDoItem {
-	fmt.Println(todos, todo)
+func addTodo(w http.ResponseWriter, r *http.Request) {
+	var todo1 Todo
+
+	err := json.NewDecoder(r.Body).Decode(&todo1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	todos = append(todos, todo1)
+}
+
+func deleteTodo(w http.ResponseWriter, r *http.Request) {
+	var todo1 Todo
+
+	err := json.NewDecoder(r.Body).Decode(&todo1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, v := range todos {
+		if v.Id == todo1.Id {
+			todos = append(todos[:i], todos[i+1:]...)
+		}
+	}
+}
+
+func handleRequests() {
+	myRouter := mux.NewRouter().StrictSlash(true)
+
+	myRouter.HandleFunc("/", getAllTodos)
+	myRouter.HandleFunc("/create", addTodo).Methods("POST")
+	myRouter.HandleFunc("/delete", deleteTodo).Methods("DELETE")
+
+	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
 
 func main() {
-	todos := []ToDoItem{
-		{
-			1,
-			"Need to test my code",
-			false,
-		},
-		{
-			2,
-			"Dockerise the app",
-			false,
-		},
-	}
-
-	// fileServer := http.FileServer(http.Dir("./static"))
-	// http.Handle("/", fileServer)
-	// http.HandleFunc("/hello", helloHandler)
-
-	// fmt.Println("Server listening on PORT: 8080")
-	// if err := http.ListenAndServe(":8080", nil); err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	todo := ToDoItem{3, "Deploy it on k3s", false}
-
-	addElement(todos, todo)
-
-	fmt.Println(todos)
+	handleRequests()
 }
