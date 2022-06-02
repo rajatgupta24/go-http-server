@@ -56,7 +56,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/create", addTodo).Methods("POST")
 	myRouter.HandleFunc("/delete", deleteTodo).Methods("DELETE")
 
-	log.Fatal(http.ListenAndServe(":10000", myRouter))
+	log.Fatal(http.ListenAndServe(":8000", myRouter))
 }
 
 func main() {
