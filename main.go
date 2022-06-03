@@ -9,7 +9,7 @@ import (
 )
 
 type Todo struct {
-	Id      int    `json:"Id"`
+	ID      int    `json:"ID"`
 	Title   string `json:"Title"`
 	IsDone  bool   `json:"IsDone"`
 	Content string `json:"Content"`
@@ -20,7 +20,10 @@ type Todos []Todo
 var todos Todos
 
 func getAllTodos(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(todos)
+	err := json.NewEncoder(w).Encode(todos)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func addTodo(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +46,7 @@ func deleteTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i, v := range todos {
-		if v.Id == todo1.Id {
+		if v.ID == todo1.ID {
 			todos = append(todos[:i], todos[i+1:]...)
 		}
 	}
