@@ -25,7 +25,10 @@ type TodoItemModel struct {
 func Home(w http.ResponseWriter, r *http.Request) {
 	log.Info("API accessed")
 	w.Header().Set("content-type", "application/json")
-	io.WriteString(w, `{"msg": "Hello World"}`)
+	_, err := io.WriteString(w, `{"msg": "Hello World"}`)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func CreateItem(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +40,10 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 	result := db.Last(&todo)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result.Value)
+	err := json.NewEncoder(w).Encode(result.Value)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func UpdateItem(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +55,10 @@ func UpdateItem(w http.ResponseWriter, r *http.Request) {
 	err := GetItemByID(id)
 	if !err {
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"updated": false, "error": "Record Not Found"}`)
+		_, err := io.WriteString(w, `{"updated": false, "error": "Record Not Found"}`)
+		if err != nil {
+			log.Fatal(err)
+		}
 	} else {
 		completed, _ := strconv.ParseBool(r.FormValue("completed"))
 		log.WithFields(log.Fields{"Id": id, "Completed": completed}).Info("Updating TodoItem")
@@ -59,7 +68,10 @@ func UpdateItem(w http.ResponseWriter, r *http.Request) {
 		db.Save(&todo)
 
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"updated": true}`)
+		_, err := io.WriteString(w, `{"updated": true}`)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -72,7 +84,10 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 	err := GetItemByID(id)
 	if !err {
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"deleted": false, "error": "Record Not Found"}`)
+		_, err2 := io.WriteString(w, `{"deleted": false, "error": "Record Not Found"}`)
+		if err2 != nil {
+			log.Fatal(err2)
+		}
 	} else {
 		log.WithFields(log.Fields{"Id": id}).Info("Deleting TodoItem")
 		todo := &TodoItemModel{}
@@ -80,7 +95,10 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 		db.Delete(&todo)
 
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"deleted": true}`)
+		_, err2 := io.WriteString(w, `{"deleted": true}`)
+		if err2 != nil {
+			log.Fatal(err2)
+		}
 	}
 }
 
@@ -103,7 +121,10 @@ func GetCompletedItems(w http.ResponseWriter, r *http.Request) {
 	completedTodoItems := GetTodoItems(true)
 	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(completedTodoItems)
+	err := json.NewEncoder(w).Encode(completedTodoItems)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func GetIncompleteItems(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +133,10 @@ func GetIncompleteItems(w http.ResponseWriter, r *http.Request) {
 	IncompleteTodoItems := GetTodoItems(false)
 	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(IncompleteTodoItems)
+	err := json.NewEncoder(w).Encode(IncompleteTodoItems)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func GetTodoItems(completed bool) interface{} {
@@ -140,5 +164,5 @@ func main() {
 	router.HandleFunc("/todo/{id}", UpdateItem).Methods("POST")
 	router.HandleFunc("/todo/{id}", DeleteItem).Methods("DELETE")
 
-	http.ListenAndServe(":5000", router)
+	log.Fatal(http.ListenAndServe(":5000", router))
 }
