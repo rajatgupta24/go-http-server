@@ -9,6 +9,8 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -o /web-server
+RUN go build -o /server
 
-CMD [ "/web-server" ]
+EXPOSE 5000
+
+CMD [ "/server" ]
