@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
       - name: go-server
-        image: rajatguptag/go-server
+        image: rajatguptag/go-server:1.0
+
         ports:
         - containerPort: 5000
         env: 
