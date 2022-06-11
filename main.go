@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -23,6 +24,11 @@ type TodoItemModel struct {
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
+
+	log.Info(os.Getenv("database_url"))
+	log.Info(os.Getenv("root"))
+	log.Info(os.Getenv("pass"))
+
 	log.Info("API accessed")
 	w.Header().Set("content-type", "application/json")
 	_, err := io.WriteString(w, `{"msg": "Hello World"}`)
@@ -158,11 +164,6 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/home", Home).Methods("GET")
-	router.HandleFunc("/todo-completed", GetCompletedItems).Methods("GET")
-	router.HandleFunc("/todo-incomplete", GetIncompleteItems).Methods("GET")
-	router.HandleFunc("/todo", CreateItem).Methods("POST")
-	router.HandleFunc("/todo/{id}", UpdateItem).Methods("POST")
-	router.HandleFunc("/todo/{id}", DeleteItem).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
