@@ -7,10 +7,10 @@ COPY go.sum ./
 
 RUN go mod download
 
-COPY . ./
+COPY main.go ./
 
-RUN go build -o /server
+RUN go build .
 
 EXPOSE 5000
 
-CMD [ "/server" ]
+CMD [ "./go-simple" ]

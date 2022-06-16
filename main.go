@@ -1,169 +1,72 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
+	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
-	"os"
-	"strconv"
-
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-var db, _ = gorm.Open("mysql", "root:root@tcp(127.0.0.1:3306)/todolist?charset=utf8&parseTime=True&loc=Local")
-
-type TodoItemModel struct {
-	Id          int `gorm:"primary_key"`
-	Description string
-	Completed   bool
-}
-
 func Home(w http.ResponseWriter, r *http.Request) {
-
-	log.Info(os.Getenv("database_url"))
-	log.Info(os.Getenv("root"))
-	log.Info(os.Getenv("pass"))
-
-	log.Info("API accessed")
-	w.Header().Set("content-type", "application/json")
-	_, err := io.WriteString(w, `{"msg": "Hello World"}`)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func CreateItem(w http.ResponseWriter, r *http.Request) {
-	description := r.FormValue("description")
-	log.WithFields(log.Fields{"description": description}).Info("Add new TodoItem. Saving to database.")
-
-	todo := &TodoItemModel{Description: description, Completed: false}
-	db.Create(&todo)
-	result := db.Last(&todo)
-
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(result.Value)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func UpdateItem(w http.ResponseWriter, r *http.Request) {
-	// Get URL parameter from mux
-	vars := mux.Vars(r)
-	id, _ := strconv.Atoi(vars["id"])
-
-	// Test if the TodoItem exist in DB
-	err := GetItemByID(id)
-	if !err {
-		w.Header().Set("Content-Type", "application/json")
-		_, err := io.WriteString(w, `{"updated": false, "error": "Record Not Found"}`)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		completed, _ := strconv.ParseBool(r.FormValue("completed"))
-		log.WithFields(log.Fields{"Id": id, "Completed": completed}).Info("Updating TodoItem")
-		todo := &TodoItemModel{}
-		db.First(&todo, id)
-		todo.Completed = completed
-		db.Save(&todo)
-
-		w.Header().Set("Content-Type", "application/json")
-		_, err := io.WriteString(w, `{"updated": true}`)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
-
-func DeleteItem(w http.ResponseWriter, r *http.Request) {
-	// Get URL parameter from mux
-	vars := mux.Vars(r)
-	id, _ := strconv.Atoi(vars["id"])
-
-	// Test if the TodoItem exist in DB
-	err := GetItemByID(id)
-	if !err {
-		w.Header().Set("Content-Type", "application/json")
-		_, err2 := io.WriteString(w, `{"deleted": false, "error": "Record Not Found"}`)
-		if err2 != nil {
-			log.Fatal(err2)
-		}
-	} else {
-		log.WithFields(log.Fields{"Id": id}).Info("Deleting TodoItem")
-		todo := &TodoItemModel{}
-		db.First(&todo, id)
-		db.Delete(&todo)
-
-		w.Header().Set("Content-Type", "application/json")
-		_, err2 := io.WriteString(w, `{"deleted": true}`)
-		if err2 != nil {
-			log.Fatal(err2)
-		}
-	}
-}
-
-func GetItemByID(Id int) bool {
-	todo := &TodoItemModel{}
-	result := db.First(&todo, Id)
-
-	if result.Error != nil {
-		log.Warn("TodoItem not found in database")
-
-		return false
-	}
-
-	return true
-}
-
-func GetCompletedItems(w http.ResponseWriter, r *http.Request) {
-	log.Info("Get completed TodoItems")
-
-	completedTodoItems := GetTodoItems(true)
-	w.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(w).Encode(completedTodoItems)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func GetIncompleteItems(w http.ResponseWriter, r *http.Request) {
-	log.Info("Get Incomplete TodoItems")
-
-	IncompleteTodoItems := GetTodoItems(false)
-	w.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(w).Encode(IncompleteTodoItems)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func GetTodoItems(completed bool) interface{} {
-	var todos []TodoItemModel
-
-	TodoItems := db.Where("completed = ?", completed).Find(&todos).Value
-
-	return TodoItems
+	fmt.Fprintf(w, "hello\n")
 }
 
 func main() {
+	db, err := sql.Open("mysql", "root:root@/todolist")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
 	defer db.Close()
 
-	db.Debug().DropTableIfExists(&TodoItemModel{})
-	db.Debug().AutoMigrate(&TodoItemModel{})
+	err = db.Ping()
+	if err != nil {
+		panic(err.Error())
+	}
 
-	log.Info("Starting server at PORT: 5000")
+	todos := []struct {
+		id   int
+		todo string
+	}{
+		{1, "Create a go-app"},
+		{2, "Dockerize the app"},
+		{3, "Deploy the app on k3s"},
+	}
 
-	router := mux.NewRouter()
+	stmt, err := db.Prepare("INSERT INTO todos(id, todo) VALUES(?, ?)")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	router.HandleFunc("/home", Home).Methods("GET")
+	for _, project := range todos {
+		if _, err := stmt.Exec(project.id, project.todo); err != nil {
+			log.Fatal(err)
+		}
+	}
 
-	log.Fatal(http.ListenAndServe(":5000", router))
+	defer stmt.Close()
+
+	rows, err := db.Query("select * from todos")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for rows.Next() {
+		var (
+			id   int64
+			name string
+		)
+		if err := rows.Scan(&id, &name); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("id %d name is %s\n", id, name)
+	}
+
+	defer rows.Close()
+
+	http.HandleFunc("/home", Home)
+	log.Fatal(http.ListenAndServe(":9000", nil))
 }
