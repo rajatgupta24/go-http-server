@@ -13,11 +13,13 @@ docker run -d -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=root mysql
 
 This will open mysql in your terminal, and will also create a database named todolist.
 ```bash
-docker exec -it mysql mysql -uroot -proot -e 'CREATE DATABASE todolist'
+docker exec -it mysql mysql -uroot -proot
 ```
+
 After creating a database, we need to create a table
 ```sql
-CREATE TABLE todos
+CREATE DATABASE todolist;
+CREATE TABLE todos(id int, todo varchar(255));
 ```
 
 To build your own image run:
@@ -30,7 +32,7 @@ To run the image & to connect it to database container run:
 docker run -d --network host --name go-simple go-simple
 ```
 
-To test the app working run or visit http://localhost:9000/home in your browser.
+To test the app working run or visit http://localhost:5000/home in your browser.
 ```bash
-curl http://localhost:9000/home
+curl http://localhost:5000/home
 ```

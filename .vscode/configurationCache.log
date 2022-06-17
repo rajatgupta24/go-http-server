@@ -1,0 +1,1 @@
+{"buildTargets":["docker.build","k.apply"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

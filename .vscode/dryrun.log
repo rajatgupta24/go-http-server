@@ -1,0 +1,5 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/rajat/Documents/my-projects/go-server'
+docker build -t rajatguptag/go-server:1.2.3 .
+make: Leaving directory '/home/rajat/Documents/my-projects/go-server'
+ 

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-server
+  labels:
+    app: go-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: go-server
+  template:
+    metadata:
+      labels:
+        app: go-server
+    spec:
+      containers:
+      - name: go-server
+        image: rajatguptag/go-server:1.2.4
+        ports:
+        - containerPort: 5000
+        env: 
+        - name: user
+          value: root
+        - name: pass
+          value: root
+        - name: database_url
+          value: mysql-service
+      - image: mysql
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        ports:
+        - containerPort: 3306
+          name: mysql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-server-service
+spec:
+  selector:
+    app: go-server
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000

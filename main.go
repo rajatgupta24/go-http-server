@@ -14,7 +14,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	db, err := sql.Open("mysql", "root:root@/todolist")
+	db, err := sql.Open("mysql", "root:root@/mysql")
 
 	if err != nil {
 		panic(err.Error())
@@ -26,6 +26,10 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	db.Exec("create database if not exists todolist;")
+	db.Exec("use todolist;")
+	db.Exec("create table todos(id int, todo varchar(255));")
 
 	todos := []struct {
 		id   int
@@ -68,5 +72,5 @@ func main() {
 	defer rows.Close()
 
 	http.HandleFunc("/home", Home)
-	log.Fatal(http.ListenAndServe(":9000", nil))
+	log.Fatal(http.ListenAndServe(":5000", nil))
 }
